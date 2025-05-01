@@ -44,7 +44,7 @@ jobs:
           # Github Action 的服务器文件路径，直接指定Jar包路径
           local: /home/runner/work/cengke-helper-back/cengke-helper-back/target/cengke-helper-0.0.1-SNAPSHOT.jar
           # 私有服务器文件路径
-          remote: /home/cengke-helper-0.0.1-SNAPSHOT.jar
+          remote: /opt/java-proj/helper/cengke-helper-0.0.1-SNAPSHOT.jar
           # 私有服务器公网IP地址
           host: ${{ secrets.HOST }}
           # 私有服务器用户名
@@ -63,7 +63,7 @@ jobs:
           port: ${{ secrets.PORT }}
           # ssh进入系统后执行什么样的操作。一般是关闭原有的服务在重启
           script: |
-            cd /home
+            cd /opt/java-proj/helper
             ps -ef | grep cengke-helper-0.0.1-SNAPSHOT.jar | grep -v grep | awk '{print $2}' | xargs kill -9
-            nohup ${{ secrets.JAVA_HOME }}/bin/java -jar /home/cengke-helper-0.0.1-SNAPSHOT.jar > runtime.log 2>&1 &
+            nohup ${{ secrets.JAVA_HOME }}/bin/java -jar /opt/java-proj/helper/cengke-helper-0.0.1-SNAPSHOT.jar > /opt/java-proj/helper/logs/runtime.log 2>&1 &
             pwd
