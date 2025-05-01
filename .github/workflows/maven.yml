@@ -38,19 +38,15 @@ jobs:
       - name: Build with Maven
         run: mvn clean package --file pom.xml
       # 将打包后的Jar包从Github Action服务器传输至私人服务器中
-      - name: Transfer jar packets
-        uses: garygrossgarten/github-action-scp@release
+      - name: 把 jar 包发到服务器，使用新的scp逻辑
+        uses: appleboy/scp-action@v1
         with:
-          # Github Action 的服务器文件路径，直接指定Jar包路径
-          local: /home/runner/work/cengke-helper-back/cengke-helper-back/target/cengke-helper-0.0.1-SNAPSHOT.jar
-          # 私有服务器文件路径
-          remote: /opt/java-proj/helper/cengke-helper-0.0.1-SNAPSHOT.jar
-          # 私有服务器公网IP地址
           host: ${{ secrets.HOST }}
-          # 私有服务器用户名
           username: ${{ secrets.USERNAME }}
-          # 使用SSH密钥
-          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          source: /home/runner/work/cengke-helper-back/cengke-helper-back/target/cengke-helper-0.0.1-SNAPSHOT.jar
+          target: /opt/java-proj/helper
       # 部署运行
       - name: Deploy
         uses: appleboy/ssh-action@master
