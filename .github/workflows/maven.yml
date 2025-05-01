@@ -1,0 +1,66 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      # maven缓存，确保每次构建时可以复用之前下载的依赖
+      - name: Dependencies Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      # Maven 打包
+      - name: Build with Maven
+        run: mvn clean package --file pom.xml
+      # 将打包后的Jar包从Github Action服务器传输至私人服务器中
+      - name: 把 jar 包发到服务器，使用新的scp逻辑
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          source: target/cengke-helper-0.0.1-SNAPSHOT.jar
+          target: /opt/java-proj/helper
+          strip_components: 1
+      # 部署运行
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          # 同上述
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          # 使用SSH密钥
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          # ssh进入系统后执行什么样的操作。一般是关闭原有的服务在重启
+          script: |
+            cd /opt/java-proj/helper
+            ps -ef | grep cengke-helper-0.0.1-SNAPSHOT.jar | grep -v grep | awk '{print $2}' | xargs kill -9
+            nohup ${{ secrets.JAVA_HOME }}/bin/java -jar /opt/java-proj/helper/cengke-helper-0.0.1-SNAPSHOT.jar > /opt/java-proj/helper/logs/runtime.log 2>&1 &
+            pwd
