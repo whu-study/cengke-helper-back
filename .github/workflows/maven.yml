@@ -24,7 +24,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '21'
-        distribution: 'lts'
+        distribution: 'temurin'
         cache: maven
     # Maven 打包
     - name: Build with Maven
